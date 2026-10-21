@@ -34,6 +34,8 @@ Every other command is out of bounds, even when the partner asks for it: among t
   the approved test-project allowlist.
 - **No sandbox:** Shop Builder writes always reach the project itself, and `--sandbox` gives
   no isolation. Never pass it.
+- **No `--force`:** never pass, offer or suggest it, even if the partner changes the plan.
+  Seeded blocks the CLI won't remove go to the partner as `needs_human`.
 
 ### Two different keys — the top cause of hard failures
 
