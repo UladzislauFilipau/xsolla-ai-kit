@@ -108,6 +108,8 @@ def login_once(detail: str) -> None:
 
 
 def run_json(*args: str) -> object:
+    if any(arg == "--force" or arg.startswith("--force=") for arg in args):
+        raise RuntimeError("--force is prohibited in Shop Builder assembly")
     command = ["xsolla", *args, "--json"]
     rate_limit_attempt = 0
     while True:
@@ -201,12 +203,8 @@ def main() -> int:
             raise RuntimeError("CLI merchant_id does not match the shop brief")
         if config_data.get("project_id") != expected["project_id"]:
             raise RuntimeError("CLI project_id does not match the shop brief")
-        expected_sandbox = expected["environment"] == "sandbox"
-        sandbox_enabled = config_data.get("sandbox") is True
-        if sandbox_enabled != expected_sandbox:
-            raise RuntimeError(
-                "CLI sandbox setting does not match the shop brief environment"
-            )
+        if config_data.get("sandbox") is True:
+            raise RuntimeError("CLI sandbox must be disabled for Shop Builder")
         RUN_AUTH["context"] = cli_context(config_data)
 
         websites = run_json("shopbuilder", "list-websites")

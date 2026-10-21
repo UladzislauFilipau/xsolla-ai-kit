@@ -1,14 +1,14 @@
 # CLI assembly operations
 
 This is the dependency map for `xsolla` 1.9.4 or newer. Run every command against the
-already verified sandbox or dedicated-test-project context; do not add per-command
+already verified dedicated-test-project context; do not add per-command
 project overrides after preflight.
 
 | Phase | Command | Consumes | Produces / unlocks |
 |---|---|---|---|
-| Discover | `xsolla config list --json` | Local profile | Merchant, project, environment/sandbox match |
+| Discover | `xsolla config list --json` | Local profile | Merchant and project match; sandbox mode is off |
 | Discover | `xsolla auth list-account --json` | Credential store | Active Publisher login state |
-| Safety | `preflight.py --approved-test-projects <file>` | Separate local approval record | Exact non-sandbox test-project identity is allowlisted |
+| Safety | `preflight.py --approved-test-projects <file>` | Separate local approval record | Exact test-project identity is allowlisted |
 | Discover | `xsolla shopbuilder list-websites --json` | Project context | Slug, landing ID, type |
 | Backup | `get-landing`, `get-structure`, `get-localization`, `list-assets`, `list-versions` | Existing slug | Restorable configuration evidence |
 | Bootstrap | `create-website --type topup` | Name, slug | Empty landing with `type:null` |
@@ -30,6 +30,7 @@ setting changed, and retries the command. A second authentication failure ends t
 run. The scripts never read a browser cookie, never accept a manually copied PA token,
 and do not retry ambiguous API operation failures. Session-bootstrap HTTP 429
 responses use bounded backoff.
+No script passes `--force`; an operation that requires it stops for review.
 
 ## ID dependencies
 
