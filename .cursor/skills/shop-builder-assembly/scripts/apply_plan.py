@@ -15,10 +15,13 @@ import uuid
 from pathlib import Path
 
 from render_plan import (
+    COMMON_LAYOUT,
     CUSTOM_CODE_WARNING,
     build_plan,
+    common_layout_id,
     effective_module,
     page_path,
+    site_block_ids,
     structure_data,
     structure_hash,
 )
@@ -195,6 +198,35 @@ def structure(slug: str) -> dict:
     if not isinstance(value, dict) or not isinstance(value.get("pages"), list):
         raise RuntimeError("get-structure returned an unexpected shape")
     return value
+
+
+def site_block_module(slug: str, block_id: str) -> object:
+    block = data(
+        run_json("shopbuilder", "get-block", "--slug", slug, "--block-id", block_id)
+    )
+    return block.get("module") if isinstance(block, dict) else None
+
+
+def ensure_common_layout(slug: str) -> str:
+    """Attach the site layout after pages so template headers/footers survive."""
+    layout_id = common_layout_id(
+        structure(slug), lambda block_id: site_block_module(slug, block_id)
+    )
+    if layout_id is not None:
+        return layout_id
+    created = data(
+        run_json("shopbuilder", "create-block", "--slug", slug, "--block", COMMON_LAYOUT)
+    )
+    block = created.get("block") if isinstance(created, dict) else None
+    block_id = block.get("_id") if isinstance(block, dict) else None
+    if not isinstance(block_id, str):
+        raise RuntimeError("create-block returned no layout block ID")
+    saved = structure(slug)
+    if block_id not in saved.get("layouts", []) or block_id not in site_block_ids(
+        saved.get("blocks")
+    ):
+        raise RuntimeError("created common layout is missing from the saved structure")
+    return block_id
 
 
 def page_for_path(value: dict, path: str) -> dict | None:
@@ -1009,6 +1041,7 @@ def main() -> int:
 
         created_pages = add_missing_pages(slug, plan["pages"])
         locales = ensure_locales(slug, plan["locales"])
+        layout_id = ensure_common_layout(slug)
         if not existed:
             print(
                 json.dumps(
@@ -1020,6 +1053,7 @@ def main() -> int:
                         "slug": slug,
                         "landing_id": landing_id,
                         "created_pages": created_pages,
+                        "layout_id": layout_id,
                         "locales": locales,
                         "next_action": (
                             "Back up the generated site, render a target-bound plan, "
@@ -1043,6 +1077,7 @@ def main() -> int:
                         "slug": slug,
                         "landing_id": landing_id,
                         "created_pages": created_pages,
+                        "layout_id": layout_id,
                         "locales": locales,
                         "next_action": (
                             "Back up the changed site, re-render its generated block IDs, "
@@ -1067,6 +1102,7 @@ def main() -> int:
                     "confirmation_id": plan["confirmation_id"],
                     "slug": slug,
                     "landing_id": landing_id,
+                    "layout_id": layout_id,
                     "site_existed": existed,
                     "pages": pages,
                     "navigation": navigation,
