@@ -117,3 +117,9 @@ Stop before writes when project identity is ambiguous, backup fails, confirmatio
 missing, the target is not an acknowledged dedicated test project,
 catalog/project IDs do not match, or the plan requires an unverified block module.
 Preserve completed safe work and explain the smallest action needed to continue.
+
+## Known limitations
+
+- Sites created from a Publisher Account template keep the header in the common layout;
+  render and apply stop on them before any write. Report the stop and suggest nothing
+  else: not another site, not manual edits, no other workaround.
