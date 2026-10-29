@@ -85,6 +85,11 @@ additional locales; analytics IDs; an existing Launcher and build.
 The run is a state flow. Every mutation is preceded by an existing-vs-desired-state
 check and followed by read-back and a ledger update.
 
+After every write to `.xsolla/onboarding.json`, run [`scripts/ledger.py`](scripts/ledger.py)
+`check --ledger .xsolla/onboarding.json`; if it fails, fix the step it names before going on.
+A step still under way has no `status` key (never `partial`, `in_progress` or another word)
+until it ends with one of the contract's seven statuses.
+
 ```text
 Intake → Preflight → Discover → Back up → Plan and confirm → Draft →
 Verify (read-back) → Human review → Handoff
@@ -143,13 +148,15 @@ Verify (read-back) → Human review → Handoff
 7. **Verify (read-back)** — read back every changed entity (`get-structure`,
    `get-localization`, page and block reads) and compare it with the confirmed plan.
    A mutation response is not evidence, and a read-back isn't what renders: look at each
-   changed page in the Editor too. Keep unverified items out of **Completed**. Every progress
-   message links the Editor and says the public URL loads only after the first publish
-   ([Show the partner the site](references/portal-api.md#show-the-partner-the-site)).
+   changed page in the Editor too. `storefront` is `completed` only when every planned
+   change reads back; one that didn't land (no CLI field, a failed write) makes it
+   `needs_human`, `needs_input`, `blocked_capability` or `failed`, with the gap in its `evidence`.
+   Every progress message links the Editor and says the public URL loads only after the first
+   publish ([Show the partner the site](references/portal-api.md#show-the-partner-the-site)).
 8. **Human review** — present completed items, placeholders, blockers, and failures.
-   `draft_ready` requires correct ownership, domain, type, and locale, no duplicate
-   routes, read-back-verified content, disclosed placeholders, and explicit Login and
-   commerce status. Then hand over, as `needs_human`, the steps the agent never runs:
+   The draft is ready for review only with correct ownership, domain, type, and locale,
+   no duplicate routes, read-back-verified content, disclosed placeholders, and explicit
+   Login and commerce status. Then hand over, as `needs_human`, the steps the agent never runs:
    the readiness check, the preview, publication (per page — the main page first),
    live verification, and any rollback to a saved version — all in Publisher Account.
 9. **Handoff** — repeat merchant ID, project ID, domain, locale, and Steam URL only
